@@ -160,107 +160,117 @@ console.log(e);
 }
  
 function createUnit(unit){
- 
+
 const map =
 document.getElementById(
 "mapContainer"
 );
- 
+
+if(!coords[unit]){
+
+coords[unit] = {
+x:100,
+y:100,
+w:42,
+h:26
+};
+
+}
+
 const div =
-document.createElement(
-"div"
-);
- 
-div.className =
-"unit";
- 
-div.innerHTML =
-unit;
- 
-div.dataset.unit =
-unit;
- 
+document.createElement("div");
+
+div.className = "unit";
+
+div.innerHTML = unit;
+
+div.dataset.unit = unit;
+
 div.style.left =
 coords[unit].x + "px";
- 
+
 div.style.top =
 coords[unit].y + "px";
- 
+
 div.style.width =
-(coords[unit].w || 42) + "px";
- 
+coords[unit].w + "px";
+
 div.style.height =
-(coords[unit].h || 26) + "px";
- 
+coords[unit].h + "px";
+
+div.style.position =
+"absolute";
+
 enableDrag(div);
- 
+
 const resize =
-document.createElement(
-"div"
-);
- 
+document.createElement("div");
+
 resize.style.position =
 "absolute";
- 
+
 resize.style.right = "-6px";
+
 resize.style.bottom = "-6px";
- 
+
 resize.style.width = "12px";
+
 resize.style.height = "12px";
- 
+
 resize.style.background =
 "black";
- 
+
 resize.style.cursor =
 "nwse-resize";
- 
-resize.style.zIndex = "999";
- 
-div.appendChild(resize);
- 
+
+resize.style.zIndex =
+"1000";
+
 resize.addEventListener(
 "mousedown",
 e=>{
- 
+
 e.stopPropagation();
- 
+
 active = {
 resize:true,
 el:div
 };
- 
+
 }
 );
- 
+
+div.appendChild(resize);
+
 map.appendChild(div);
- 
+
 }
  
 function addUnit(){
- 
+
 const input =
 document.getElementById(
 "unitInput"
 );
- 
+
 const unit =
 input.value.trim();
- 
+
 if(!unit) return;
- 
+
 coords[unit] = {
 x:100,
 y:100,
- w:42,
- h:26
+w:42,
+h:26
 };
- 
+
 createUnit(unit);
- 
-input.value="";
- 
+
+input.value = "";
+
 markUnsaved();
- 
+
 }
  
 function enableDrag(el){
