@@ -5,7 +5,7 @@
  
 <meta charset="UTF-8">
  
-<title>CubeSmart Interactive Mapper</title>
+<title>CubeSmart Cleaning Map</title>
  
 <style>
  
@@ -18,7 +18,7 @@ background:#f0f0f0;
  
 #toolbar{
  
-height:80px;
+height:90px;
  
 background:#1f1f1f;
  
@@ -64,7 +64,7 @@ position:relative;
  
 overflow:auto;
  
-height:calc(100vh - 80px);
+height:calc(100vh - 90px);
  
 background:#d9d9d9;
  
@@ -91,10 +91,6 @@ display:flex;
 align-items:center;
  
 justify-content:center;
- 
-background:#34c759;
- 
-color:black;
  
 font-size:11px;
  
@@ -166,25 +162,27 @@ z-index:5000;
  
 }
  
+.green{
+background:#34c759;
+color:black;
+}
+ 
+.yellow{
+background:#ffd60a;
+color:black;
+}
+ 
+.brown{
+background:#8b5a2b;
+color:white;
+}
+ 
 #saveStatus{
  
 margin-left:auto;
  
 font-weight:bold;
  
-}
- 
-.green{
-background:#34c759;
-}
- 
-.yellow{
-background:#ffd60a;
-}
- 
-.brown{
-background:#8b5a2b;
-color:white;
 }
  
 #mouseCoords{
@@ -223,20 +221,8 @@ Delete Selected
 Generate Row
 </button>
  
-<button onclick="duplicateSelected()">
-Duplicate
-</button>
- 
-<button onclick="markGreen()">
-Green
-</button>
- 
-<button onclick="markYellow()">
-Yellow
-</button>
- 
-<button onclick="markBrown()">
-Brown
+<button onclick="markCleanedToday()">
+Mark Cleaned Today
 </button>
  
 <input
@@ -246,15 +232,6 @@ placeholder="Add Unit"
  
 <button onclick="addUnit()">
 Add Unit
-</button>
- 
-<input
-id="search"
-placeholder="Search"
-/>
- 
-<button onclick="searchUnit()">
-Find
 </button>
  
 <div id="mouseCoords">
@@ -300,6 +277,8 @@ await fetch(
 coords =
 await res.json();
  
+updateAllColors();
+ 
 Object.keys(coords)
 .forEach(createUnit);
  
@@ -308,6 +287,49 @@ Object.keys(coords)
 console.log(e);
  
 }
+ 
+}
+ 
+function daysSince(date){
+ 
+if(!date) return 999;
+ 
+return Math.floor(
+ 
+(new Date() - new Date(date))
+ 
+/ 86400000
+ 
+);
+ 
+}
+ 
+function getStatusColor(days){
+ 
+if(days <= 14)
+return "green";
+ 
+if(days <= 29)
+return "yellow";
+ 
+return "brown";
+ 
+}
+ 
+function updateAllColors(){
+ 
+Object.keys(coords)
+.forEach(unit=>{
+ 
+const days =
+daysSince(
+coords[unit].lastCleaned
+);
+ 
+coords[unit].color =
+getStatusColor(days);
+ 
+});
  
 }
  
@@ -326,7 +348,8 @@ x:100,
 y:100,
 w:42,
 h:26,
-color:"green"
+lastCleaned:null,
+color:"brown"
  
 };
  
@@ -337,7 +360,7 @@ document.createElement("div");
  
 div.className =
 "unit "+
-(coords[unit].color || "green");
+coords[unit].color;
  
 div.innerHTML = unit;
  
@@ -364,6 +387,18 @@ e=>{
 e.stopPropagation();
  
 toggleSelect(div);
+ 
+alert(
+ 
+"Unit: "+unit+
+ 
+"\nLast Cleaned: "+(
+coords[unit].lastCleaned || "Never"
+)+
+ 
+"\nStatus: "+coords[unit].color
+ 
+);
  
 }
 );
@@ -412,7 +447,8 @@ x:100,
 y:100,
 w:42,
 h:26,
-color:"green"
+lastCleaned:null,
+color:"brown"
  
 };
  
@@ -625,6 +661,8 @@ selectionBox.remove();
  
 selectionBox = null;
  
+selectionStart = null;
+ 
 }
  
 }
@@ -636,8 +674,18 @@ document.getElementById(
 "mousedown",
 e=>{
  
-if(e.target.id !== "facility")
+if(
+e.target.id !== "facility"
+)
 return;
+ 
+if(selectionBox){
+ 
+selectionBox.remove();
+ 
+selectionBox = null;
+ 
+}
  
 clearSelection();
  
@@ -672,6 +720,12 @@ selectionStart.x+"px";
  
 selectionBox.style.top =
 selectionStart.y+"px";
+ 
+selectionBox.style.width =
+"0px";
+ 
+selectionBox.style.height =
+"0px";
  
 map.appendChild(
 selectionBox
@@ -728,17 +782,6 @@ selected=[];
  
 function deleteSelected(){
  
-if(selected.length===0)
-return;
- 
-if(
-!confirm(
-"Delete "+
-selected.length+
-" units?"
-)
-) return;
- 
 selected.forEach(div=>{
  
 delete coords[
@@ -755,44 +798,23 @@ markUnsaved();
  
 }
  
-function duplicateSelected(){
+function markCleanedToday(){
+ 
+const today =
+new Date()
+.toISOString()
+.split("T")[0];
  
 selected.forEach(div=>{
  
-const old =
-coords[
-div.dataset.unit
-];
+const unit =
+div.dataset.unit;
  
-const newUnit =
-prompt(
-"New unit for "+
-div.dataset.unit
-);
+coords[unit]
+.lastCleaned = today;
  
-if(!newUnit) return;
- 
-coords[newUnit] = {
- 
-x:old.x + 20,
-y:old.y + 20,
-w:old.w,
-h:old.h,
-color:old.color
- 
-};
- 
-createUnit(newUnit);
- 
-});
- 
-markUnsaved();
- 
-}
- 
-function markColor(color){
- 
-selected.forEach(div=>{
+coords[unit]
+.color = "green";
  
 div.classList.remove(
 "green",
@@ -801,29 +823,13 @@ div.classList.remove(
 );
  
 div.classList.add(
-color
+"green"
 );
- 
-coords[
-div.dataset.unit
-].color = color;
  
 });
  
 markUnsaved();
  
-}
- 
-function markGreen(){
-markColor("green");
-}
- 
-function markYellow(){
-markColor("yellow");
-}
- 
-function markBrown(){
-markColor("brown");
 }
  
 function generateRow(){
@@ -870,7 +876,8 @@ x:x,
 y:y,
 w:42,
 h:26,
-color:"green"
+lastCleaned:null,
+color:"brown"
  
 };
  
@@ -894,36 +901,6 @@ x += spacing;
 }
  
 markUnsaved();
- 
-}
- 
-function searchUnit(){
- 
-const value =
-document.getElementById(
-"search"
-).value.trim();
- 
-const unit =
-document.querySelector(
-'[data-unit="'+value+'"]'
-);
- 
-if(unit){
- 
-unit.scrollIntoView({
- 
-behavior:"smooth",
-block:"center",
-inline:"center"
- 
-});
- 
-unit.classList.add(
-"selected"
-);
- 
-}
  
 }
  
@@ -1004,6 +981,8 @@ if(local){
  
 coords =
 JSON.parse(local);
+ 
+updateAllColors();
  
 Object.keys(coords)
 .forEach(createUnit);
