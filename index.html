@@ -156,7 +156,7 @@ position:absolute;
  
 border:2px dashed blue;
  
-background:rgba(0,0,255,.1);
+background:rgba(0,0,255,.15);
  
 pointer-events:none;
  
@@ -344,70 +344,6 @@ X:0 Y:0
 Unsaved
 </div>
  
-<div class="templateBox">
- 
-<b>5x5</b>
- 
-W
-<input type="number" id="size_5x5_w" value="30">
- 
-H
-<input type="number" id="size_5x5_h" value="30">
- 
-</div>
- 
-<div class="templateBox">
- 
-<b>5x10</b>
- 
-W
-<input type="number" id="size_5x10_w" value="30">
- 
-H
-<input type="number" id="size_5x10_h" value="55">
- 
-</div>
- 
-<div class="templateBox">
- 
-<b>10x10</b>
- 
-W
-<input type="number" id="size_10x10_w" value="55">
- 
-H
-<input type="number" id="size_10x10_h" value="55">
- 
-</div>
- 
-<div class="templateBox">
- 
-<b>10x15</b>
- 
-W
-<input type="number" id="size_10x15_w" value="55">
- 
-H
-<input type="number" id="size_10x15_h" value="80">
- 
-</div>
- 
-<div class="templateBox">
- 
-<b>10x25</b>
- 
-W
-<input type="number" id="size_10x25_w" value="55">
- 
-H
-<input type="number" id="size_10x25_h" value="130">
- 
-</div>
- 
-<button onclick="updateTemplateSizes()">
-Update Templates
-</button>
- 
 </div>
  
 <div id="mapContainer">
@@ -453,80 +389,7 @@ let selectionBox = null;
  
 let selectionStart = null;
  
-function updateTemplateSizes(){
- 
-unitSizes["5x5"] = {
- 
-w:parseInt(document.getElementById("size_5x5_w").value),
-h:parseInt(document.getElementById("size_5x5_h").value)
- 
-};
- 
-unitSizes["5x10"] = {
- 
-w:parseInt(document.getElementById("size_5x10_w").value),
-h:parseInt(document.getElementById("size_5x10_h").value)
- 
-};
- 
-unitSizes["10x10"] = {
- 
-w:parseInt(document.getElementById("size_10x10_w").value),
-h:parseInt(document.getElementById("size_10x10_h").value)
- 
-};
- 
-unitSizes["10x15"] = {
- 
-w:parseInt(document.getElementById("size_10x15_w").value),
-h:parseInt(document.getElementById("size_10x15_h").value)
- 
-};
- 
-unitSizes["10x25"] = {
- 
-w:parseInt(document.getElementById("size_10x25_w").value),
-h:parseInt(document.getElementById("size_10x25_h").value)
- 
-};
- 
-localStorage.setItem(
-"unitTemplateSizes",
-JSON.stringify(unitSizes)
-);
- 
-alert("Template sizes updated");
- 
-}
- 
-function loadTemplateSizes(){
- 
-const saved =
-localStorage.getItem(
-"unitTemplateSizes"
-);
- 
-if(!saved) return;
- 
-unitSizes =
-JSON.parse(saved);
- 
-Object.keys(unitSizes)
-.forEach(size=>{
- 
-document.getElementById(
-"size_"+size+"_w"
-).value =
-unitSizes[size].w;
- 
-document.getElementById(
-"size_"+size+"_h"
-).value =
-unitSizes[size].h;
- 
-});
- 
-}
+let isSelecting = false;
  
 function daysSince(date){
  
@@ -815,7 +678,10 @@ y+"px";
  
 }
  
-if(selectionBox){
+if(
+isSelecting &&
+selectionBox
+){
  
 const currentX =
 e.clientX -
@@ -852,16 +718,16 @@ selectionStart.y
 );
  
 selectionBox.style.left =
-x+"px";
+x + "px";
  
 selectionBox.style.top =
-y+"px";
+y + "px";
  
 selectionBox.style.width =
-w+"px";
+w + "px";
  
 selectionBox.style.height =
-h+"px";
+h + "px";
  
 }
  
@@ -874,7 +740,10 @@ document.addEventListener(
  
 active = null;
  
-if(selectionBox){
+if(
+isSelecting &&
+selectionBox
+){
  
 const box =
 selectionBox.getBoundingClientRect();
@@ -905,6 +774,8 @@ selectionBox = null;
  
 selectionStart = null;
  
+isSelecting = false;
+ 
 }
  
 }
@@ -923,6 +794,14 @@ return;
  
 clearSelection();
  
+if(selectionBox){
+ 
+selectionBox.remove();
+ 
+selectionBox = null;
+ 
+}
+ 
 const map =
 document.getElementById(
 "mapContainer"
@@ -933,11 +812,13 @@ map.getBoundingClientRect();
  
 selectionStart = {
  
-x:e.clientX -
+x:
+e.clientX -
 rect.left +
 map.scrollLeft,
  
-y:e.clientY -
+y:
+e.clientY -
 rect.top +
 map.scrollTop
  
@@ -950,14 +831,22 @@ selectionBox.className =
 "selectionBox";
  
 selectionBox.style.left =
-selectionStart.x+"px";
+selectionStart.x + "px";
  
 selectionBox.style.top =
-selectionStart.y+"px";
+selectionStart.y + "px";
+ 
+selectionBox.style.width =
+"0px";
+ 
+selectionBox.style.height =
+"0px";
  
 map.appendChild(
 selectionBox
 );
+ 
+isSelecting = true;
  
 }
 );
@@ -1187,8 +1076,6 @@ url
 }
  
 window.onload=()=>{
- 
-loadTemplateSizes();
  
 const local =
 localStorage.getItem(
