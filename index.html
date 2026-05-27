@@ -18,7 +18,7 @@ background:#f0f0f0;
  
 #toolbar{
  
-height:70px;
+height:80px;
  
 background:#1f1f1f;
  
@@ -64,9 +64,11 @@ position:relative;
  
 overflow:auto;
  
-height:calc(100vh - 70px);
+height:calc(100vh - 80px);
  
 background:#d9d9d9;
+ 
+cursor:crosshair;
  
 }
  
@@ -185,6 +187,14 @@ background:#8b5a2b;
 color:white;
 }
  
+#mouseCoords{
+ 
+font-weight:bold;
+ 
+padding-left:10px;
+ 
+}
+ 
 </style>
  
 </head>
@@ -246,6 +256,10 @@ placeholder="Search"
 <button onclick="searchUnit()">
 Find
 </button>
+ 
+<div id="mouseCoords">
+X:0 Y:0
+</div>
  
 <div id="saveStatus">
 Unsaved
@@ -347,11 +361,9 @@ div.addEventListener(
 "click",
 e=>{
  
-if(e.shiftKey){
+e.stopPropagation();
  
 toggleSelect(div);
- 
-}
  
 }
 );
@@ -418,9 +430,11 @@ el.addEventListener(
 "mousedown",
 e=>{
  
-if(e.target.classList.contains(
+if(
+e.target.classList.contains(
 "resizeHandle"
-)) return;
+)
+) return;
  
 active = {
  
@@ -439,8 +453,6 @@ document.addEventListener(
 "mousemove",
 e=>{
  
-if(active){
- 
 const map =
 document.getElementById(
 "mapContainer"
@@ -448,6 +460,27 @@ document.getElementById(
  
 const rect =
 map.getBoundingClientRect();
+ 
+const mouseX =
+Math.floor(
+e.clientX -
+rect.left +
+map.scrollLeft
+);
+ 
+const mouseY =
+Math.floor(
+e.clientY -
+rect.top +
+map.scrollTop
+);
+ 
+document.getElementById(
+"mouseCoords"
+).innerHTML =
+"X:"+mouseX+" Y:"+mouseY;
+ 
+if(active){
  
 const unit =
 active.el.dataset.unit;
@@ -503,14 +536,6 @@ markUnsaved();
 }
  
 if(selectionBox){
- 
-const map =
-document.getElementById(
-"mapContainer"
-);
- 
-const rect =
-map.getBoundingClientRect();
  
 const currentX =
 e.clientX -
@@ -678,6 +703,9 @@ selectUnit(div);
  
 function selectUnit(div){
  
+if(selected.includes(div))
+return;
+ 
 div.classList.add(
 "selected"
 );
@@ -699,6 +727,17 @@ selected=[];
 }
  
 function deleteSelected(){
+ 
+if(selected.length===0)
+return;
+ 
+if(
+!confirm(
+"Delete "+
+selected.length+
+" units?"
+)
+) return;
  
 selected.forEach(div=>{
  
