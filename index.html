@@ -5,7 +5,7 @@
  
 <meta charset="UTF-8">
  
-<title>CubeSmart Unit Mapper</title>
+<title>CubeSmart Interactive Mapper</title>
  
 <style>
  
@@ -13,20 +13,48 @@ body{
 margin:0;
 font-family:Arial;
 overflow:hidden;
-background:#f5f5f5;
+background:#f0f0f0;
 }
  
 #toolbar{
  
-height:60px;
-background:#222;
+height:70px;
+ 
+background:#1f1f1f;
+ 
 color:white;
  
 display:flex;
+ 
 align-items:center;
+ 
 gap:10px;
  
 padding:10px;
+ 
+flex-wrap:wrap;
+ 
+}
+ 
+button{
+ 
+padding:8px 12px;
+ 
+cursor:pointer;
+ 
+border:none;
+ 
+border-radius:4px;
+ 
+font-weight:bold;
+ 
+}
+ 
+input{
+ 
+padding:8px;
+ 
+width:120px;
  
 }
  
@@ -36,15 +64,15 @@ position:relative;
  
 overflow:auto;
  
-height:calc(100vh - 60px);
+height:calc(100vh - 70px);
  
-background:#ddd;
+background:#d9d9d9;
  
 }
  
 #facility{
  
-width:1600px;
+width:2200px;
  
 display:block;
  
@@ -86,6 +114,14 @@ min-height:20px;
  
 }
  
+.unit.selected{
+ 
+outline:4px solid blue;
+ 
+z-index:999;
+ 
+}
+ 
 .unit:active{
  
 cursor:grabbing;
@@ -114,6 +150,20 @@ border-radius:2px;
  
 }
  
+.selectionBox{
+ 
+position:absolute;
+ 
+border:2px dashed blue;
+ 
+background:rgba(0,0,255,.1);
+ 
+pointer-events:none;
+ 
+z-index:5000;
+ 
+}
+ 
 #saveStatus{
  
 margin-left:auto;
@@ -122,17 +172,17 @@ font-weight:bold;
  
 }
  
-button{
- 
-padding:8px 12px;
-cursor:pointer;
- 
+.green{
+background:#34c759;
 }
  
-input{
+.yellow{
+background:#ffd60a;
+}
  
-padding:8px;
- 
+.brown{
+background:#8b5a2b;
+color:white;
 }
  
 </style>
@@ -143,12 +193,40 @@ padding:8px;
  
 <div id="toolbar">
  
-<button onclick="saveCoords()">
+<button onclick="saveLocal()">
 Save Local
 </button>
  
 <button onclick="exportCoords()">
 Export JSON
+</button>
+ 
+<button onclick="clearSelection()">
+Clear Selection
+</button>
+ 
+<button onclick="deleteSelected()">
+Delete Selected
+</button>
+ 
+<button onclick="generateRow()">
+Generate Row
+</button>
+ 
+<button onclick="duplicateSelected()">
+Duplicate
+</button>
+ 
+<button onclick="markGreen()">
+Green
+</button>
+ 
+<button onclick="markYellow()">
+Yellow
+</button>
+ 
+<button onclick="markBrown()">
+Brown
 </button>
  
 <input
@@ -160,8 +238,17 @@ placeholder="Add Unit"
 Add Unit
 </button>
  
+<input
+id="search"
+placeholder="Search"
+/>
+ 
+<button onclick="searchUnit()">
+Find
+</button>
+ 
 <div id="saveStatus">
-Not Saved
+Unsaved
 </div>
  
 </div>
@@ -180,6 +267,12 @@ src="facilitymap.png"
 let coords = {};
  
 let active = null;
+ 
+let selected = [];
+ 
+let selectionBox = null;
+ 
+let selectionStart = null;
  
 async function loadCoords(){
  
@@ -214,10 +307,13 @@ document.getElementById(
 if(!coords[unit]){
  
 coords[unit] = {
+ 
 x:100,
 y:100,
 w:42,
-h:26
+h:26,
+color:"green"
+ 
 };
  
 }
@@ -225,7 +321,9 @@ h:26
 const div =
 document.createElement("div");
  
-div.className = "unit";
+div.className =
+"unit "+
+(coords[unit].color || "green");
  
 div.innerHTML = unit;
  
@@ -244,6 +342,19 @@ div.style.height =
 coords[unit].h + "px";
  
 enableDrag(div);
+ 
+div.addEventListener(
+"click",
+e=>{
+ 
+if(e.shiftKey){
+ 
+toggleSelect(div);
+ 
+}
+ 
+}
+);
  
 const resize =
 document.createElement("div");
@@ -284,15 +395,18 @@ input.value.trim();
 if(!unit) return;
  
 coords[unit] = {
+ 
 x:100,
 y:100,
 w:42,
-h:26
+h:26,
+color:"green"
+ 
 };
  
 createUnit(unit);
  
-input.value = "";
+input.value="";
  
 markUnsaved();
  
@@ -304,10 +418,16 @@ el.addEventListener(
 "mousedown",
 e=>{
  
+if(e.target.classList.contains(
+"resizeHandle"
+)) return;
+ 
 active = {
+ 
 el,
 offsetX:e.offsetX,
 offsetY:e.offsetY
+ 
 };
  
 }
@@ -319,7 +439,7 @@ document.addEventListener(
 "mousemove",
 e=>{
  
-if(!active) return;
+if(active){
  
 const map =
 document.getElementById(
@@ -349,6 +469,7 @@ active.el.style.height =
 height + "px";
  
 coords[unit].w = width;
+ 
 coords[unit].h = height;
  
 }else{
@@ -372,11 +493,72 @@ active.el.style.top =
 y + "px";
  
 coords[unit].x = x;
+ 
 coords[unit].y = y;
  
 }
  
 markUnsaved();
+ 
+}
+ 
+if(selectionBox){
+ 
+const map =
+document.getElementById(
+"mapContainer"
+);
+ 
+const rect =
+map.getBoundingClientRect();
+ 
+const currentX =
+e.clientX -
+rect.left +
+map.scrollLeft;
+ 
+const currentY =
+e.clientY -
+rect.top +
+map.scrollTop;
+ 
+const x =
+Math.min(
+selectionStart.x,
+currentX
+);
+ 
+const y =
+Math.min(
+selectionStart.y,
+currentY
+);
+ 
+const w =
+Math.abs(
+currentX -
+selectionStart.x
+);
+ 
+const h =
+Math.abs(
+currentY -
+selectionStart.y
+);
+ 
+selectionBox.style.left =
+x + "px";
+ 
+selectionBox.style.top =
+y + "px";
+ 
+selectionBox.style.width =
+w + "px";
+ 
+selectionBox.style.height =
+h + "px";
+ 
+}
  
 }
 );
@@ -387,8 +569,324 @@ document.addEventListener(
  
 active = null;
  
+if(selectionBox){
+ 
+const box =
+selectionBox.getBoundingClientRect();
+ 
+document
+.querySelectorAll(".unit")
+.forEach(unit=>{
+ 
+const rect =
+unit.getBoundingClientRect();
+ 
+if(
+ 
+rect.left < box.right &&
+rect.right > box.left &&
+rect.top < box.bottom &&
+rect.bottom > box.top
+ 
+){
+ 
+selectUnit(unit);
+ 
+}
+ 
+});
+ 
+selectionBox.remove();
+ 
+selectionBox = null;
+ 
+}
+ 
 }
 );
+ 
+document.getElementById(
+"mapContainer"
+).addEventListener(
+"mousedown",
+e=>{
+ 
+if(e.target.id !== "facility")
+return;
+ 
+clearSelection();
+ 
+const map =
+document.getElementById(
+"mapContainer"
+);
+ 
+const rect =
+map.getBoundingClientRect();
+ 
+selectionStart = {
+ 
+x:e.clientX -
+rect.left +
+map.scrollLeft,
+ 
+y:e.clientY -
+rect.top +
+map.scrollTop
+ 
+};
+ 
+selectionBox =
+document.createElement("div");
+ 
+selectionBox.className =
+"selectionBox";
+ 
+selectionBox.style.left =
+selectionStart.x+"px";
+ 
+selectionBox.style.top =
+selectionStart.y+"px";
+ 
+map.appendChild(
+selectionBox
+);
+ 
+}
+);
+ 
+function toggleSelect(div){
+ 
+if(selected.includes(div)){
+ 
+div.classList.remove(
+"selected"
+);
+ 
+selected =
+selected.filter(
+x=>x!==div
+);
+ 
+}else{
+ 
+selectUnit(div);
+ 
+}
+ 
+}
+ 
+function selectUnit(div){
+ 
+div.classList.add(
+"selected"
+);
+ 
+selected.push(div);
+ 
+}
+ 
+function clearSelection(){
+ 
+selected.forEach(x=>
+x.classList.remove(
+"selected"
+)
+);
+ 
+selected=[];
+ 
+}
+ 
+function deleteSelected(){
+ 
+selected.forEach(div=>{
+ 
+delete coords[
+div.dataset.unit
+];
+ 
+div.remove();
+ 
+});
+ 
+selected=[];
+ 
+markUnsaved();
+ 
+}
+ 
+function duplicateSelected(){
+ 
+selected.forEach(div=>{
+ 
+const old =
+coords[
+div.dataset.unit
+];
+ 
+const newUnit =
+prompt(
+"New unit for "+
+div.dataset.unit
+);
+ 
+if(!newUnit) return;
+ 
+coords[newUnit] = {
+ 
+x:old.x + 20,
+y:old.y + 20,
+w:old.w,
+h:old.h,
+color:old.color
+ 
+};
+ 
+createUnit(newUnit);
+ 
+});
+ 
+markUnsaved();
+ 
+}
+ 
+function markColor(color){
+ 
+selected.forEach(div=>{
+ 
+div.classList.remove(
+"green",
+"yellow",
+"brown"
+);
+ 
+div.classList.add(
+color
+);
+ 
+coords[
+div.dataset.unit
+].color = color;
+ 
+});
+ 
+markUnsaved();
+ 
+}
+ 
+function markGreen(){
+markColor("green");
+}
+ 
+function markYellow(){
+markColor("yellow");
+}
+ 
+function markBrown(){
+markColor("brown");
+}
+ 
+function generateRow(){
+ 
+const start =
+parseInt(
+prompt("Start Unit")
+);
+ 
+const end =
+parseInt(
+prompt("End Unit")
+);
+ 
+const direction =
+prompt(
+"horizontal or vertical?"
+);
+ 
+let x =
+parseInt(
+prompt("Start X")
+);
+ 
+let y =
+parseInt(
+prompt("Start Y")
+);
+ 
+const spacing =
+parseInt(
+prompt("Spacing")
+) || 50;
+ 
+for(
+let i=start;
+i<=end;
+i++
+){
+ 
+coords[i] = {
+ 
+x:x,
+y:y,
+w:42,
+h:26,
+color:"green"
+ 
+};
+ 
+createUnit(
+String(i)
+);
+ 
+if(
+direction ===
+"vertical"
+){
+ 
+y += spacing;
+ 
+}else{
+ 
+x += spacing;
+ 
+}
+ 
+}
+ 
+markUnsaved();
+ 
+}
+ 
+function searchUnit(){
+ 
+const value =
+document.getElementById(
+"search"
+).value.trim();
+ 
+const unit =
+document.querySelector(
+'[data-unit="'+value+'"]'
+);
+ 
+if(unit){
+ 
+unit.scrollIntoView({
+ 
+behavior:"smooth",
+block:"center",
+inline:"center"
+ 
+});
+ 
+unit.classList.add(
+"selected"
+);
+ 
+}
+ 
+}
  
 function markUnsaved(){
  
@@ -399,7 +897,7 @@ document.getElementById(
  
 }
  
-function saveCoords(){
+function saveLocal(){
  
 localStorage.setItem(
 "coords",
@@ -409,7 +907,7 @@ JSON.stringify(coords)
 document.getElementById(
 "saveStatus"
 ).innerHTML =
-"Saved Locally";
+"Saved Local";
  
 }
  
@@ -448,6 +946,11 @@ a.click();
 URL.revokeObjectURL(
 url
 );
+ 
+document.getElementById(
+"saveStatus"
+).innerHTML =
+"Exported JSON";
  
 }
  
