@@ -68,7 +68,7 @@ position:relative;
 
 overflow:auto;
 
-height:calc(100vh - 220px);
+height:70vh;
 
 background:#d9d9d9;
 
@@ -189,45 +189,6 @@ font-weight:bold;
 font-weight:bold;
 }
 
-#sidePanel{
-
-position:absolute;
-
-top:240px;
-right:20px;
-
-width:260px;
-
-background:white;
-
-border:2px solid black;
-
-padding:10px;
-
-z-index:10000;
-
-box-shadow:0 0 10px rgba(0,0,0,.3);
-
-}
-
-#sidePanelHeader{
-
-font-weight:bold;
-
-margin-bottom:10px;
-
-cursor:move;
-
-background:#222;
-
-color:white;
-
-padding:8px;
-
-margin:-10px -10px 10px -10px;
-
-}
-
 .hidden{
 display:none;
 }
@@ -330,15 +291,6 @@ value="10x25"
 10x25
 </label>
 
-<label>
-Admin
-<input
-type="checkbox"
-id="adminToggle"
-checked
->
-</label>
-
 
 X:0 Y:0
 
@@ -420,8 +372,6 @@ Update Templates
 
 
 Unsaved
-
-
 
 
 
@@ -992,24 +942,9 @@ saveLocal();
 
 function markCleanedToday(){
 
-const today =
-new Date()
-.toISOString()
-.split("T")[0];
-
 selected.forEach(div=>{
 
-const unit =
-div.dataset.unit;
-
-coords[unit]
-.lastCleaned = today;
-
-coords[unit]
-.color = "green";
-
 div.classList.remove(
-"green",
 "yellow",
 "brown"
 );
@@ -1087,19 +1022,6 @@ Number(startXInput);
 let y =
 Number(startYInput);
 
-if(
-isNaN(x) ||
-isNaN(y)
-){
-
-alert(
-"Invalid coordinates"
-);
-
-return;
-
-}
-
 const spacingInput =
 prompt("Spacing");
 
@@ -1119,16 +1041,6 @@ const selectedSize =
 document.querySelector(
 'input[name="unitSize"]:checked'
 );
-
-if(!selectedSize){
-
-alert(
-"No size selected"
-);
-
-return;
-
-}
 
 const size =
 unitSizes[
