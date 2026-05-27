@@ -5,71 +5,89 @@
  
 <meta charset="UTF-8">
  
-<title>CubeSmart Cleaning Map</title>
+<title>CubeSmart Unit Mapper</title>
  
 <style>
  
 body{
 margin:0;
 font-family:Arial;
-background:#f5f5f5;
+overflow:hidden;
 }
  
 #toolbar{
-padding:12px;
+ 
+height:60px;
 background:#222;
 color:white;
+ 
 display:flex;
-gap:10px;
 align-items:center;
+gap:10px;
+ 
+padding:10px;
+ 
 }
  
 #mapContainer{
+ 
 position:relative;
+ 
 overflow:auto;
-height:92vh;
+ 
+height:calc(100vh - 60px);
+ 
+background:#ddd;
+ 
 }
  
 #facility{
+ 
 width:1600px;
+ 
 display:block;
+ 
 }
  
 .unit{
  
 position:absolute;
  
-border:2px solid black;
+width:42px;
+height:26px;
  
-font-size:11px;
+border:2px solid black;
  
 display:flex;
 align-items:center;
 justify-content:center;
  
-cursor:pointer;
+font-size:11px;
  
-opacity:.8;
+cursor:grab;
  
 user-select:none;
-}
  
-.green{
 background:#34c759;
+ 
+z-index:100;
+ 
 }
  
-.yellow{
-background:#ffd60a;
-}
- 
-.brown{
-background:#8b5a2b;
-color:white;
+.unit:active{
+cursor:grabbing;
 }
  
 .selected{
 outline:4px solid blue;
-z-index:1000;
+}
+ 
+#saveStatus{
+ 
+margin-left:auto;
+ 
+font-weight:bold;
+ 
 }
  
 </style>
@@ -80,14 +98,26 @@ z-index:1000;
  
 <div id="toolbar">
  
-<button onclick="markSelected()">
-Mark Selected Cleaned
+<button onclick="saveCoords()">
+Save Coordinates
+</button>
+ 
+<button onclick="exportCoords()">
+Export JSON
 </button>
  
 <input
-id="search"
-placeholder="Search Unit"
+id="unitInput"
+placeholder="Add Unit"
 />
+ 
+<button onclick="addUnit()">
+Add Unit
+</button>
+ 
+<div id="saveStatus">
+Not Saved
+</div>
  
 </div>
  
@@ -102,167 +132,245 @@ src="facilitymap.png"
  
 <script>
  
-const CSV_URL =
-"https://docs.google.com/spreadsheets/d/e/2PACX-1vQkLNdZWkbRK3rT0Bn6vRsZYk1eda6ueCagq60zw8PUU2zGrDnP_RhrzDuti0aifnuw_4UMBOxRhUzC/pub?gid=0&single=true&output=csv";
+let coords = {};
  
-const coords = {
+let active = null;
  
-"415":{x:300,y:400},
-"416":{x:350,y:400},
-"417":{x:400,y:400}
+async function loadCoords(){
  
-};
- 
-let selected=[];
- 
-async function loadData(){
+try{
  
 const res =
-await fetch(CSV_URL);
+await fetch(
+"coordinates.json"
+);
  
-const text =
-await res.text();
+coords =
+await res.json();
  
-const rows =
-text.split("\n")
-.slice(1);
+Object.keys(coords)
+.forEach(createUnit);
  
-rows.forEach(r=>{
+}catch(e){
  
-const cols =
-r.split(",");
+console.log(e);
  
-const unit =
-cols[0];
+}
  
-const last =
-cols[1];
+}
  
-const notes =
-cols[2];
+function createUnit(unit){
  
-const cleaner =
-cols[3];
- 
-if(!coords[unit]) return;
- 
-const days =
-daysSince(last);
+const map =
+document.getElementById(
+"mapContainer"
+);
  
 const div =
-document.createElement("div");
+document.createElement(
+"div"
+);
  
 div.className =
-"unit "+
-getColor(days);
+"unit";
  
 div.innerHTML =
 unit;
  
+div.dataset.unit =
+unit;
+ 
 div.style.left =
-coords[unit].x+"px";
+coords[unit].x + "px";
  
 div.style.top =
-coords[unit].y+"px";
+coords[unit].y + "px";
  
-div.style.width =
-"42px";
+enableDrag(div);
  
-div.style.height =
-"26px";
+map.appendChild(div);
  
-div.onclick=()=>{
+}
  
-alert(
+function addUnit(){
  
-"Unit: "+unit+
- 
-"\nLast Cleaned: "+last+
- 
-"\nDays Since: "+days+
- 
-"\nNotes: "+notes+
- 
-"\nCleaner: "+cleaner
- 
+const input =
+document.getElementById(
+"unitInput"
 );
  
-toggleSelect(
-unit,
-div
-);
+const unit =
+input.value.trim();
  
+if(!unit) return;
+ 
+coords[unit] = {
+x:100,
+y:100
 };
  
-document
-.getElementById(
+createUnit(unit);
+ 
+input.value="";
+ 
+markUnsaved();
+ 
+}
+ 
+function enableDrag(el){
+ 
+el.addEventListener(
+"mousedown",
+e=>{
+ 
+active = {
+el,
+offsetX:e.offsetX,
+offsetY:e.offsetY
+};
+ 
+}
+);
+ 
+}
+ 
+document.addEventListener(
+"mousemove",
+e=>{
+ 
+if(!active) return;
+ 
+const map =
+document.getElementById(
 "mapContainer"
-)
-.appendChild(div);
+);
  
-});
+const rect =
+map.getBoundingClientRect();
+ 
+const x =
+e.clientX -
+rect.left +
+map.scrollLeft -
+active.offsetX;
+ 
+const y =
+e.clientY -
+rect.top +
+map.scrollTop -
+active.offsetY;
+ 
+active.el.style.left =
+x+"px";
+ 
+active.el.style.top =
+y+"px";
+ 
+const unit =
+active.el.dataset.unit;
+ 
+coords[unit] = {
+x,
+y
+};
+ 
+markUnsaved();
+ 
+}
+);
+ 
+document.addEventListener(
+"mouseup",
+()=>{
+ 
+active = null;
+ 
+}
+);
+ 
+function markUnsaved(){
+ 
+document.getElementById(
+"saveStatus"
+).innerHTML =
+"Unsaved Changes";
  
 }
  
-function daysSince(date){
+function saveCoords(){
  
-return Math.floor(
-(new Date()-new Date(date))
-/86400000
+localStorage.setItem(
+"coords",
+JSON.stringify(coords)
+);
+ 
+document.getElementById(
+"saveStatus"
+).innerHTML =
+"Saved Locally";
+ 
+}
+ 
+function exportCoords(){
+ 
+const data =
+JSON.stringify(
+coords,
+null,
+2
+);
+ 
+const blob =
+new Blob(
+[data],
+{
+type:"application/json"
+}
+);
+ 
+const url =
+URL.createObjectURL(
+blob
+);
+ 
+const a =
+document.createElement("a");
+ 
+a.href = url;
+ 
+a.download =
+"coordinates.json";
+ 
+a.click();
+ 
+URL.revokeObjectURL(
+url
 );
  
 }
  
-function getColor(days){
+window.onload=()=>{
  
-if(days<=14)
-return "green";
- 
-if(days<=29)
-return "yellow";
- 
-return "brown";
- 
-}
- 
-function toggleSelect(
-unit,
-div
-){
- 
-if(selected.includes(unit)){
- 
-selected=
-selected.filter(
-x=>x!==unit
+const local =
+localStorage.getItem(
+"coords"
 );
  
-div.classList.remove(
-"selected"
-);
+if(local){
+ 
+coords =
+JSON.parse(local);
+ 
+Object.keys(coords)
+.forEach(createUnit);
  
 }else{
  
-selected.push(unit);
- 
-div.classList.add(
-"selected"
-);
+loadCoords();
  
 }
  
-}
- 
-function markSelected(){
- 
-alert(
-"Selected Units:\n"+
-selected.join(", ")
-);
- 
-}
- 
-loadData();
+};
  
 </script>
  
