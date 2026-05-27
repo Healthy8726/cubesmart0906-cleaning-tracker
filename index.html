@@ -1,286 +1,289 @@
 <!DOCTYPE html>
 <html>
- 
+
 <head>
- 
+
 <meta charset="UTF-8">
- 
+
 <title>CubeSmart Cleaning Map</title>
- 
+
 <style>
- 
+
 body{
 margin:0;
 font-family:Arial;
 overflow:hidden;
 background:#f0f0f0;
 }
- 
+
 #toolbar{
- 
-height:170px;
- 
+
+height:auto;
+
+min-height:220px;
+
 background:#1f1f1f;
- 
+
 color:white;
- 
+
 display:flex;
- 
-align-items:center;
- 
+
+align-items:flex-start;
+
 gap:10px;
- 
+
 padding:10px;
- 
+
 flex-wrap:wrap;
- 
-overflow:auto;
- 
+
+overflow-y:auto;
+
 }
- 
+
 button{
- 
+
 padding:8px 12px;
- 
+
 cursor:pointer;
- 
+
 border:none;
- 
+
 border-radius:4px;
- 
+
 font-weight:bold;
- 
+
 }
- 
+
 input{
- 
+
 padding:6px;
- 
+
 width:70px;
- 
+
 }
- 
+
 #mapContainer{
- 
+
 position:relative;
- 
+
 overflow:auto;
- 
-height:calc(100vh - 170px);
- 
+
+height:calc(100vh - 220px);
+
 background:#d9d9d9;
- 
+
 cursor:crosshair;
- 
+
 }
- 
+
 #facility{
- 
+
 width:2200px;
- 
+
 display:block;
- 
+
 }
- 
+
 .unit{
- 
+
 position:absolute;
- 
+
 border:2px solid black;
- 
+
 display:flex;
- 
+
 align-items:center;
- 
+
 justify-content:center;
- 
+
 font-size:11px;
- 
+
 font-weight:bold;
- 
+
 cursor:grab;
- 
+
 user-select:none;
- 
+
 box-sizing:border-box;
- 
+
 overflow:hidden;
- 
+
 z-index:100;
- 
+
 min-width:20px;
- 
+
 min-height:20px;
- 
+
 }
- 
+
 .unit.selected{
- 
+
 outline:4px solid blue;
- 
+
 z-index:999;
- 
+
 }
- 
+
 .unit:active{
- 
+
 cursor:grabbing;
- 
+
 }
- 
+
 .resizeHandle{
- 
+
 position:absolute;
- 
+
 right:-6px;
- 
+
 bottom:-6px;
- 
+
 width:12px;
- 
+
 height:12px;
- 
+
 background:black;
- 
+
 cursor:nwse-resize;
- 
+
 z-index:1000;
- 
+
 border-radius:2px;
- 
+
 }
- 
+
 .selectionBox{
- 
+
 position:absolute;
- 
+
 border:2px dashed blue;
- 
+
 background:rgba(0,0,255,.15);
- 
+
 pointer-events:none;
- 
+
 z-index:5000;
- 
+
 }
- 
+
 .green{
 background:#34c759;
 color:black;
 }
- 
+
 .yellow{
 background:#ffd60a;
 color:black;
 }
- 
+
 .brown{
 background:#8b5a2b;
 color:white;
 }
- 
+
 #saveStatus{
 font-weight:bold;
 }
- 
+
 #mouseCoords{
 font-weight:bold;
 }
- 
+
 #sidePanel{
- 
+
 position:absolute;
- 
-top:190px;
+
+top:240px;
 right:20px;
- 
+
 width:260px;
- 
+
 background:white;
- 
+
 border:2px solid black;
- 
+
 padding:10px;
- 
+
 z-index:10000;
- 
+
 box-shadow:0 0 10px rgba(0,0,0,.3);
- 
+
 }
- 
+
 #sidePanelHeader{
- 
+
 font-weight:bold;
- 
+
 margin-bottom:10px;
- 
+
 cursor:move;
- 
+
 background:#222;
- 
+
 color:white;
- 
+
 padding:8px;
- 
+
 margin:-10px -10px 10px -10px;
- 
+
 }
- 
+
 .hidden{
 display:none;
 }
- 
+
 label{
 font-size:13px;
 }
- 
+
 .templateBox{
 display:flex;
 align-items:center;
 gap:5px;
 }
- 
+
 </style>
- 
+
 </head>
- 
+
 <body>
- 
-<div id="toolbar">
- 
+
+
+
 <button onclick="saveLocal()">
 Save Local
 </button>
- 
+
 <button onclick="exportCoords()">
 Export JSON
 </button>
- 
+
 <button onclick="clearSelection()">
 Clear Selection
 </button>
- 
+
 <button onclick="deleteSelected()">
 Delete Selected
 </button>
- 
+
 <button onclick="generateRow()">
 Generate Row
 </button>
- 
+
 <button onclick="markCleanedToday()">
 Mark Cleaned Today
 </button>
- 
+
 <input
 id="unitInput"
 placeholder="Unit"
 />
- 
+
+
 <button onclick="addUnit()">
 Add Unit
 </button>
- 
+
 <label>
 <input
 type="radio"
@@ -290,7 +293,7 @@ checked
 >
 5x5
 </label>
- 
+
 <label>
 <input
 type="radio"
@@ -299,7 +302,7 @@ value="5x10"
 >
 5x10
 </label>
- 
+
 <label>
 <input
 type="radio"
@@ -308,7 +311,7 @@ value="10x10"
 >
 10x10
 </label>
- 
+
 <label>
 <input
 type="radio"
@@ -317,7 +320,7 @@ value="10x15"
 >
 10x15
 </label>
- 
+
 <label>
 <input
 type="radio"
@@ -326,7 +329,7 @@ value="10x25"
 >
 10x25
 </label>
- 
+
 <label>
 Admin
 <input
@@ -335,926 +338,925 @@ id="adminToggle"
 checked
 >
 </label>
- 
-<div id="mouseCoords">
+
+
 X:0 Y:0
-</div>
- 
-<div id="saveStatus">
-Unsaved
-</div>
- 
-<div class="templateBox">
- 
-<b>5x5</b>
- 
+
+
+
+Template Sizes
+
+
+5x5
+
+
 W
 <input type="number" id="size_5x5_w" value="30">
- 
+
+
 H
 <input type="number" id="size_5x5_h" value="30">
- 
-</div>
- 
-<div class="templateBox">
- 
-<b>5x10</b>
- 
+
+
+
+
+5x10
+
+
 W
 <input type="number" id="size_5x10_w" value="30">
- 
+
+
 H
 <input type="number" id="size_5x10_h" value="55">
- 
-</div>
- 
-<div class="templateBox">
- 
-<b>10x10</b>
- 
+
+
+
+
+10x10
+
+
 W
 <input type="number" id="size_10x10_w" value="55">
- 
+
+
 H
 <input type="number" id="size_10x10_h" value="55">
- 
-</div>
- 
-<div class="templateBox">
- 
-<b>10x15</b>
- 
+
+
+
+
+10x15
+
+
 W
 <input type="number" id="size_10x15_w" value="55">
- 
+
+
 H
 <input type="number" id="size_10x15_h" value="80">
- 
-</div>
- 
-<div class="templateBox">
- 
-<b>10x25</b>
- 
+
+
+
+
+10x25
+
+
 W
 <input type="number" id="size_10x25_w" value="55">
- 
+
+
 H
 <input type="number" id="size_10x25_h" value="130">
- 
-</div>
- 
+
+
+
+
 <button onclick="updateTemplateSizes()">
 Update Templates
 </button>
- 
-</div>
- 
-<div id="mapContainer">
- 
-<img
-id="facility"
-src="facilitymap.png"
-/>
- 
-</div>
- 
-<div id="sidePanel" class="hidden">
- 
-<div id="sidePanelHeader">
-Unit Details
-</div>
- 
-<div id="panelContent"></div>
- 
-</div>
- 
+
+
+
+
+Unsaved
+
+
+
+
+
+
+
+
+
+
+
+
+
 <script>
- 
+
 const GRID_SIZE = 5;
- 
+
 let unitSizes = {
- 
+
 "5x5":{w:30,h:30},
 "5x10":{w:30,h:55},
 "10x10":{w:55,h:55},
 "10x15":{w:55,h:80},
 "10x25":{w:55,h:130}
- 
+
 };
- 
+
 let coords = {};
- 
+
 let active = null;
- 
+
 let selected = [];
- 
+
 let selectionBox = null;
- 
+
 let selectionStart = null;
- 
+
 let isSelecting = false;
- 
+
 function updateTemplateSizes(){
- 
+
 unitSizes["5x5"] = {
- 
+
 w:parseInt(document.getElementById("size_5x5_w").value),
 h:parseInt(document.getElementById("size_5x5_h").value)
- 
+
 };
- 
+
 unitSizes["5x10"] = {
- 
+
 w:parseInt(document.getElementById("size_5x10_w").value),
 h:parseInt(document.getElementById("size_5x10_h").value)
- 
+
 };
- 
+
 unitSizes["10x10"] = {
- 
+
 w:parseInt(document.getElementById("size_10x10_w").value),
 h:parseInt(document.getElementById("size_10x10_h").value)
- 
+
 };
- 
+
 unitSizes["10x15"] = {
- 
+
 w:parseInt(document.getElementById("size_10x15_w").value),
 h:parseInt(document.getElementById("size_10x15_h").value)
- 
+
 };
- 
+
 unitSizes["10x25"] = {
- 
+
 w:parseInt(document.getElementById("size_10x25_w").value),
 h:parseInt(document.getElementById("size_10x25_h").value)
- 
+
 };
- 
+
 localStorage.setItem(
 "unitTemplateSizes",
 JSON.stringify(unitSizes)
 );
- 
+
 alert("Template sizes updated");
- 
+
 }
- 
+
 function loadTemplateSizes(){
- 
+
 const saved =
 localStorage.getItem(
 "unitTemplateSizes"
 );
- 
+
 if(!saved) return;
- 
+
 unitSizes =
 JSON.parse(saved);
- 
+
 Object.keys(unitSizes)
 .forEach(size=>{
- 
+
 document.getElementById(
 "size_"+size+"_w"
 ).value =
 unitSizes[size].w;
- 
+
 document.getElementById(
 "size_"+size+"_h"
 ).value =
 unitSizes[size].h;
- 
+
 });
- 
+
 }
- 
-function daysSince(date){
- 
-if(!date) return 999;
- 
-return Math.floor(
-(new Date() - new Date(date))
-/86400000
-);
- 
-}
- 
-function getStatusColor(days){
- 
-if(days <= 14)
-return "green";
- 
-if(days <= 29)
-return "yellow";
- 
-return "brown";
- 
-}
- 
+
 function addUnit(){
- 
+
 const unit =
 document.getElementById(
 "unitInput"
 ).value.trim();
- 
+
 if(!unit) return;
- 
+
 const selectedSize =
 document.querySelector(
 'input[name="unitSize"]:checked'
 ).value;
- 
+
 const size =
 unitSizes[selectedSize];
- 
+
 coords[unit] = {
- 
+
 x:100,
 y:100,
- 
+
 w:size.w,
 h:size.h,
- 
+
 type:selectedSize,
- 
+
 lastCleaned:null,
- 
+
 color:"brown"
- 
+
 };
- 
+
 createUnit(unit);
- 
+
 saveLocal();
- 
+
 }
- 
+
 function createUnit(unit){
- 
+
 const map =
 document.getElementById(
 "mapContainer"
 );
- 
+
 const data =
 coords[unit];
- 
+
 const div =
 document.createElement("div");
- 
+
 div.className =
 "unit "+data.color;
- 
+
 div.innerHTML = unit;
- 
+
 div.dataset.unit = unit;
- 
+
 div.style.left =
 data.x+"px";
- 
+
 div.style.top =
 data.y+"px";
- 
+
 div.style.width =
 data.w+"px";
- 
+
 div.style.height =
 data.h+"px";
- 
+
 div.addEventListener(
 "click",
 e=>{
- 
+
 e.stopPropagation();
- 
+
 toggleSelect(div);
- 
-const admin =
-document.getElementById(
-"adminToggle"
-).checked;
- 
-if(admin) return;
- 
-showPanel(unit);
- 
+
 }
 );
- 
+
 div.addEventListener(
 "mousedown",
 e=>{
- 
+
 if(
 e.target.classList.contains(
 "resizeHandle"
 )
 ) return;
- 
+
 active = {
- 
+
 el:div,
 offsetX:e.offsetX,
 offsetY:e.offsetY
- 
+
 };
- 
+
 }
 );
- 
+
 const resize =
 document.createElement("div");
- 
+
 resize.className =
 "resizeHandle";
- 
+
 resize.addEventListener(
 "mousedown",
 e=>{
- 
+
 e.stopPropagation();
- 
+
 active = {
 resize:true,
 el:div
 };
- 
+
 }
 );
- 
+
 div.appendChild(resize);
- 
+
 map.appendChild(div);
- 
+
 }
- 
-function showPanel(unit){
- 
-const panel =
-document.getElementById(
-"sidePanel"
-);
- 
-const content =
-document.getElementById(
-"panelContent"
-);
- 
-const data =
-coords[unit];
- 
-content.innerHTML = `
- 
-<b>Unit:</b> ${unit}<br><br>
- 
-<b>Last Cleaned:</b>
-${data.lastCleaned || "Never"}<br><br>
- 
-<b>Status:</b>
-${data.color}<br><br>
- 
-<b>Type:</b>
-${data.type}
- 
-`;
- 
-panel.classList.remove(
-"hidden"
-);
- 
-}
- 
+
 document.addEventListener(
 "mousemove",
 e=>{
- 
+
 const map =
 document.getElementById(
 "mapContainer"
 );
- 
+
 const rect =
 map.getBoundingClientRect();
- 
+
 const mouseX =
 Math.floor(
 e.clientX -
 rect.left +
 map.scrollLeft
 );
- 
+
 const mouseY =
 Math.floor(
 e.clientY -
 rect.top +
 map.scrollTop
 );
- 
+
 document.getElementById(
 "mouseCoords"
 ).innerHTML =
 "X:"+mouseX+" Y:"+mouseY;
- 
+
 if(active){
- 
+
 const unit =
 active.el.dataset.unit;
- 
+
 if(active.resize){
- 
+
 const width =
 e.clientX -
 active.el.offsetLeft;
- 
+
 const height =
 e.clientY -
 active.el.offsetTop;
- 
+
 active.el.style.width =
 width+"px";
- 
+
 active.el.style.height =
 height+"px";
- 
+
 coords[unit].w = width;
 coords[unit].h = height;
- 
+
 }else{
- 
+
 let x =
 e.clientX -
 rect.left +
 map.scrollLeft -
 active.offsetX;
- 
+
 let y =
 e.clientY -
 rect.top +
 map.scrollTop -
 active.offsetY;
- 
+
 x =
 Math.round(
 x / GRID_SIZE
 )*GRID_SIZE;
- 
+
 y =
 Math.round(
 y / GRID_SIZE
 )*GRID_SIZE;
- 
+
 coords[unit].x = x;
 coords[unit].y = y;
- 
+
 active.el.style.left =
 x+"px";
- 
+
 active.el.style.top =
 y+"px";
- 
+
 }
- 
+
 }
- 
+
 if(
 isSelecting &&
 selectionBox
 ){
- 
+
 const currentX =
 e.clientX -
 rect.left +
 map.scrollLeft;
- 
+
 const currentY =
 e.clientY -
 rect.top +
 map.scrollTop;
- 
+
 const x =
 Math.min(
 selectionStart.x,
 currentX
 );
- 
+
 const y =
 Math.min(
 selectionStart.y,
 currentY
 );
- 
+
 const w =
 Math.abs(
 currentX -
 selectionStart.x
 );
- 
+
 const h =
 Math.abs(
 currentY -
 selectionStart.y
 );
- 
+
 selectionBox.style.left =
 x + "px";
- 
+
 selectionBox.style.top =
 y + "px";
- 
+
 selectionBox.style.width =
 w + "px";
- 
+
 selectionBox.style.height =
 h + "px";
- 
+
 }
- 
-}
-);
- 
+
+});
+
 document.addEventListener(
 "mouseup",
 ()=>{
- 
+
 active = null;
- 
+
 if(
 isSelecting &&
 selectionBox
 ){
- 
+
 const box =
 selectionBox.getBoundingClientRect();
- 
+
 document
 .querySelectorAll(".unit")
 .forEach(unit=>{
- 
+
 const rect =
 unit.getBoundingClientRect();
- 
+
 if(
 rect.left < box.right &&
 rect.right > box.left &&
 rect.top < box.bottom &&
 rect.bottom > box.top
 ){
- 
+
 selectUnit(unit);
- 
+
 }
- 
+
 });
- 
+
 selectionBox.remove();
- 
+
 selectionBox = null;
- 
+
 selectionStart = null;
- 
+
 isSelecting = false;
- 
+
 }
- 
-}
-);
- 
+
+});
+
 document.getElementById(
 "mapContainer"
 ).addEventListener(
 "mousedown",
 e=>{
- 
+
 if(
 e.target.id !== "facility"
 )
 return;
- 
+
 clearSelection();
- 
+
 if(selectionBox){
- 
+
 selectionBox.remove();
- 
+
 selectionBox = null;
- 
+
 }
- 
+
 const map =
 document.getElementById(
 "mapContainer"
 );
- 
+
 const rect =
 map.getBoundingClientRect();
- 
+
 selectionStart = {
- 
+
 x:
 e.clientX -
 rect.left +
 map.scrollLeft,
- 
+
 y:
 e.clientY -
 rect.top +
 map.scrollTop
- 
+
 };
- 
+
 selectionBox =
 document.createElement("div");
- 
+
 selectionBox.className =
 "selectionBox";
- 
+
 selectionBox.style.left =
 selectionStart.x + "px";
- 
+
 selectionBox.style.top =
 selectionStart.y + "px";
- 
+
 selectionBox.style.width =
 "0px";
- 
+
 selectionBox.style.height =
 "0px";
- 
+
 map.appendChild(
 selectionBox
 );
- 
+
 isSelecting = true;
- 
+
 }
 );
- 
+
 function toggleSelect(div){
- 
+
 if(selected.includes(div)){
- 
+
 div.classList.remove(
 "selected"
 );
- 
+
 selected =
 selected.filter(
 x=>x!==div
 );
- 
+
 }else{
- 
+
 selectUnit(div);
- 
+
 }
- 
+
 }
- 
+
 function selectUnit(div){
- 
+
 if(selected.includes(div))
 return;
- 
+
 div.classList.add(
 "selected"
 );
- 
+
 selected.push(div);
- 
+
 }
- 
+
 function clearSelection(){
- 
+
 selected.forEach(x=>
 x.classList.remove(
 "selected"
 )
 );
- 
+
 selected=[];
- 
+
 }
- 
+
 function deleteSelected(){
- 
+
 selected.forEach(div=>{
- 
+
 delete coords[
 div.dataset.unit
 ];
- 
+
 div.remove();
- 
+
 });
- 
+
 selected=[];
- 
+
 saveLocal();
- 
+
 }
- 
+
 function markCleanedToday(){
- 
+
 const today =
 new Date()
 .toISOString()
 .split("T")[0];
- 
+
 selected.forEach(div=>{
- 
+
 const unit =
 div.dataset.unit;
- 
+
 coords[unit]
 .lastCleaned = today;
- 
+
 coords[unit]
 .color = "green";
- 
+
 div.classList.remove(
 "green",
 "yellow",
 "brown"
 );
- 
+
 div.classList.add(
 "green"
 );
- 
+
 });
- 
+
 saveLocal();
- 
+
 }
- 
+
 function generateRow(){
- 
+
+const startInput =
+prompt("Start Unit");
+
+const endInput =
+prompt("End Unit");
+
+if(
+startInput === null ||
+endInput === null
+) return;
+
 const start =
-parseInt(
-prompt("Start Unit")
-);
- 
+Number(startInput);
+
 const end =
-parseInt(
-prompt("End Unit")
-);
- 
+Number(endInput);
+
 if(
 isNaN(start) ||
 isNaN(end)
-) return;
- 
+){
+
+alert(
+"Invalid unit numbers"
+);
+
+return;
+
+}
+
 const numbering =
 prompt(
 "ascending or descending?"
-)?.toLowerCase();
- 
+);
+
+if(!numbering) return;
+
 const direction =
 prompt(
 "horizontal or vertical?"
-)?.toLowerCase();
- 
+);
+
+if(!direction) return;
+
+const startXInput =
+prompt("Start X");
+
+const startYInput =
+prompt("Start Y");
+
+if(
+startXInput === null ||
+startYInput === null
+) return;
+
 let x =
-parseInt(
-prompt("Start X")
-);
- 
+Number(startXInput);
+
 let y =
-parseInt(
-prompt("Start Y")
+Number(startYInput);
+
+if(
+isNaN(x) ||
+isNaN(y)
+){
+
+alert(
+"Invalid coordinates"
 );
- 
-const spacing =
-parseInt(
-prompt("Spacing")
-) || 50;
- 
+
+return;
+
+}
+
+const spacingInput =
+prompt("Spacing");
+
+let spacing =
+Number(spacingInput);
+
+if(
+isNaN(spacing) ||
+spacing <= 0
+){
+
+spacing = 50;
+
+}
+
 const selectedSize =
 document.querySelector(
 'input[name="unitSize"]:checked'
-).value;
- 
+);
+
+if(!selectedSize){
+
+alert(
+"No size selected"
+);
+
+return;
+
+}
+
 const size =
-unitSizes[selectedSize];
- 
-if(numbering === "descending"){
- 
+unitSizes[
+selectedSize.value
+];
+
+if(
+numbering.toLowerCase() ===
+"descending"
+){
+
 for(
 let i=start;
 i>=end;
 i--
 ){
- 
+
 coords[String(i)] = {
- 
+
 x:x,
 y:y,
- 
+
 w:size.w,
 h:size.h,
- 
-type:selectedSize,
- 
+
+type:selectedSize.value,
+
 lastCleaned:null,
- 
+
 color:"brown"
- 
+
 };
- 
+
 createUnit(
 String(i)
 );
- 
+
 if(
-direction ===
+direction.toLowerCase() ===
 "vertical"
 ){
- 
+
 y += spacing;
- 
+
 }else{
- 
+
 x += spacing;
- 
+
 }
- 
+
 }
- 
+
 }else{
- 
+
 for(
 let i=start;
 i<=end;
 i++
 ){
- 
+
 coords[String(i)] = {
- 
+
 x:x,
 y:y,
- 
+
 w:size.w,
 h:size.h,
- 
-type:selectedSize,
- 
+
+type:selectedSize.value,
+
 lastCleaned:null,
- 
+
 color:"brown"
- 
+
 };
- 
+
 createUnit(
 String(i)
 );
- 
+
 if(
-direction ===
+direction.toLowerCase() ===
 "vertical"
 ){
- 
+
 y += spacing;
- 
+
 }else{
- 
+
 x += spacing;
- 
+
 }
- 
+
 }
- 
+
 }
- 
+
 saveLocal();
- 
+
+alert(
+"Row generated successfully"
+);
+
 }
- 
+
 function saveLocal(){
- 
+
 localStorage.setItem(
 "coords",
 JSON.stringify(coords)
 );
- 
+
 document.getElementById(
 "saveStatus"
 ).innerHTML =
 "Saved Local";
- 
+
 }
- 
+
 function exportCoords(){
- 
+
 const data =
 JSON.stringify(
 coords,
 null,
 2
 );
- 
+
 const blob =
 new Blob(
 [data],
@@ -1262,65 +1264,51 @@ new Blob(
 type:"application/json"
 }
 );
- 
+
 const url =
 URL.createObjectURL(
 blob
 );
- 
+
 const a =
 document.createElement("a");
- 
+
 a.href = url;
- 
+
 a.download =
 "coordinates.json";
- 
+
 a.click();
- 
+
 URL.revokeObjectURL(
 url
 );
- 
+
 }
- 
+
 window.onload=()=>{
- 
+
 loadTemplateSizes();
- 
+
 const local =
 localStorage.getItem(
 "coords"
 );
- 
+
 if(local){
- 
+
 coords =
 JSON.parse(local);
- 
+
 Object.keys(coords)
-.forEach(unit=>{
- 
-const days =
-daysSince(
-coords[unit]
-.lastCleaned
-);
- 
-coords[unit]
-.color =
-getStatusColor(days);
- 
-createUnit(unit);
- 
-});
- 
+.forEach(createUnit);
+
 }
- 
+
 };
- 
+
 </script>
- 
+
 </body>
- 
+
 </html>
