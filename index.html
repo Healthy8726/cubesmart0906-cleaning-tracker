@@ -18,7 +18,7 @@ background:#f0f0f0;
  
 #toolbar{
  
-height:160px;
+height:170px;
  
 background:#1f1f1f;
  
@@ -66,7 +66,7 @@ position:relative;
  
 overflow:auto;
  
-height:calc(100vh - 160px);
+height:calc(100vh - 170px);
  
 background:#d9d9d9;
  
@@ -191,7 +191,7 @@ font-weight:bold;
  
 position:absolute;
  
-top:180px;
+top:190px;
 right:20px;
  
 width:260px;
@@ -344,6 +344,70 @@ X:0 Y:0
 Unsaved
 </div>
  
+<div class="templateBox">
+ 
+<b>5x5</b>
+ 
+W
+<input type="number" id="size_5x5_w" value="30">
+ 
+H
+<input type="number" id="size_5x5_h" value="30">
+ 
+</div>
+ 
+<div class="templateBox">
+ 
+<b>5x10</b>
+ 
+W
+<input type="number" id="size_5x10_w" value="30">
+ 
+H
+<input type="number" id="size_5x10_h" value="55">
+ 
+</div>
+ 
+<div class="templateBox">
+ 
+<b>10x10</b>
+ 
+W
+<input type="number" id="size_10x10_w" value="55">
+ 
+H
+<input type="number" id="size_10x10_h" value="55">
+ 
+</div>
+ 
+<div class="templateBox">
+ 
+<b>10x15</b>
+ 
+W
+<input type="number" id="size_10x15_w" value="55">
+ 
+H
+<input type="number" id="size_10x15_h" value="80">
+ 
+</div>
+ 
+<div class="templateBox">
+ 
+<b>10x25</b>
+ 
+W
+<input type="number" id="size_10x25_w" value="55">
+ 
+H
+<input type="number" id="size_10x25_h" value="130">
+ 
+</div>
+ 
+<button onclick="updateTemplateSizes()">
+Update Templates
+</button>
+ 
 </div>
  
 <div id="mapContainer">
@@ -390,6 +454,81 @@ let selectionBox = null;
 let selectionStart = null;
  
 let isSelecting = false;
+ 
+function updateTemplateSizes(){
+ 
+unitSizes["5x5"] = {
+ 
+w:parseInt(document.getElementById("size_5x5_w").value),
+h:parseInt(document.getElementById("size_5x5_h").value)
+ 
+};
+ 
+unitSizes["5x10"] = {
+ 
+w:parseInt(document.getElementById("size_5x10_w").value),
+h:parseInt(document.getElementById("size_5x10_h").value)
+ 
+};
+ 
+unitSizes["10x10"] = {
+ 
+w:parseInt(document.getElementById("size_10x10_w").value),
+h:parseInt(document.getElementById("size_10x10_h").value)
+ 
+};
+ 
+unitSizes["10x15"] = {
+ 
+w:parseInt(document.getElementById("size_10x15_w").value),
+h:parseInt(document.getElementById("size_10x15_h").value)
+ 
+};
+ 
+unitSizes["10x25"] = {
+ 
+w:parseInt(document.getElementById("size_10x25_w").value),
+h:parseInt(document.getElementById("size_10x25_h").value)
+ 
+};
+ 
+localStorage.setItem(
+"unitTemplateSizes",
+JSON.stringify(unitSizes)
+);
+ 
+alert("Template sizes updated");
+ 
+}
+ 
+function loadTemplateSizes(){
+ 
+const saved =
+localStorage.getItem(
+"unitTemplateSizes"
+);
+ 
+if(!saved) return;
+ 
+unitSizes =
+JSON.parse(saved);
+ 
+Object.keys(unitSizes)
+.forEach(size=>{
+ 
+document.getElementById(
+"size_"+size+"_w"
+).value =
+unitSizes[size].w;
+ 
+document.getElementById(
+"size_"+size+"_h"
+).value =
+unitSizes[size].h;
+ 
+});
+ 
+}
  
 function daysSince(date){
  
@@ -448,6 +587,8 @@ color:"brown"
 };
  
 createUnit(unit);
+ 
+saveLocal();
  
 }
  
@@ -911,6 +1052,8 @@ div.remove();
  
 selected=[];
  
+saveLocal();
+ 
 }
  
 function markCleanedToday(){
@@ -943,6 +1086,8 @@ div.classList.add(
  
 });
  
+saveLocal();
+ 
 }
  
 function generateRow(){
@@ -957,10 +1102,20 @@ parseInt(
 prompt("End Unit")
 );
  
+if(
+isNaN(start) ||
+isNaN(end)
+) return;
+ 
+const numbering =
+prompt(
+"ascending or descending?"
+)?.toLowerCase();
+ 
 const direction =
 prompt(
 "horizontal or vertical?"
-);
+)?.toLowerCase();
  
 let x =
 parseInt(
@@ -985,13 +1140,58 @@ document.querySelector(
 const size =
 unitSizes[selectedSize];
  
+if(numbering === "descending"){
+ 
+for(
+let i=start;
+i>=end;
+i--
+){
+ 
+coords[String(i)] = {
+ 
+x:x,
+y:y,
+ 
+w:size.w,
+h:size.h,
+ 
+type:selectedSize,
+ 
+lastCleaned:null,
+ 
+color:"brown"
+ 
+};
+ 
+createUnit(
+String(i)
+);
+ 
+if(
+direction ===
+"vertical"
+){
+ 
+y += spacing;
+ 
+}else{
+ 
+x += spacing;
+ 
+}
+ 
+}
+ 
+}else{
+ 
 for(
 let i=start;
 i<=end;
 i++
 ){
  
-coords[i] = {
+coords[String(i)] = {
  
 x:x,
 y:y,
@@ -1028,12 +1228,21 @@ x += spacing;
  
 }
  
+saveLocal();
+ 
+}
+ 
 function saveLocal(){
  
 localStorage.setItem(
 "coords",
 JSON.stringify(coords)
 );
+ 
+document.getElementById(
+"saveStatus"
+).innerHTML =
+"Saved Local";
  
 }
  
@@ -1076,6 +1285,8 @@ url
 }
  
 window.onload=()=>{
+ 
+loadTemplateSizes();
  
 const local =
 localStorage.getItem(
