@@ -250,7 +250,9 @@ if(!unit) return;
  
 coords[unit] = {
 x:100,
-y:100
+y:100,
+ w:42,
+ h:26
 };
  
 createUnit(unit);
@@ -281,12 +283,67 @@ offsetY:e.offsetY
 document.addEventListener(
 "mousemove",
 e=>{
- 
+
 if(!active) return;
- 
+
 const map =
 document.getElementById(
 "mapContainer"
+);
+
+const rect =
+map.getBoundingClientRect();
+
+const unit =
+active.el.dataset.unit;
+
+if(active.resize){
+
+const width =
+e.clientX -
+active.el.offsetLeft;
+
+const height =
+e.clientY -
+active.el.offsetTop;
+
+active.el.style.width =
+width + "px";
+
+active.el.style.height =
+height + "px";
+
+coords[unit].w = width;
+coords[unit].h = height;
+
+}else{
+
+const x =
+e.clientX -
+rect.left +
+map.scrollLeft -
+active.offsetX;
+
+const y =
+e.clientY -
+rect.top +
+map.scrollTop -
+active.offsetY;
+
+active.el.style.left =
+x+"px";
+
+active.el.style.top =
+y+"px";
+
+coords[unit].x = x;
+coords[unit].y = y;
+
+}
+
+markUnsaved();
+
+}
 );
  
 const rect =
