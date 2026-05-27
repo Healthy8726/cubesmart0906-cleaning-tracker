@@ -186,7 +186,51 @@ coords[unit].x + "px";
 div.style.top =
 coords[unit].y + "px";
  
+div.style.width =
+(coords[unit].w || 42) + "px";
+ 
+div.style.height =
+(coords[unit].h || 26) + "px";
+ 
 enableDrag(div);
+ 
+const resize =
+document.createElement(
+"div"
+);
+ 
+resize.style.position =
+"absolute";
+ 
+resize.style.right = "-6px";
+resize.style.bottom = "-6px";
+ 
+resize.style.width = "12px";
+resize.style.height = "12px";
+ 
+resize.style.background =
+"black";
+ 
+resize.style.cursor =
+"nwse-resize";
+ 
+resize.style.zIndex = "999";
+ 
+div.appendChild(resize);
+ 
+resize.addEventListener(
+"mousedown",
+e=>{
+ 
+e.stopPropagation();
+ 
+active = {
+resize:true,
+el:div
+};
+ 
+}
+);
  
 map.appendChild(div);
  
