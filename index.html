@@ -18,7 +18,7 @@ background:#f0f0f0;
  
 #toolbar{
  
-height:90px;
+height:160px;
  
 background:#1f1f1f;
  
@@ -33,6 +33,8 @@ gap:10px;
 padding:10px;
  
 flex-wrap:wrap;
+ 
+overflow:auto;
  
 }
  
@@ -52,9 +54,9 @@ font-weight:bold;
  
 input{
  
-padding:8px;
+padding:6px;
  
-width:120px;
+width:70px;
  
 }
  
@@ -64,7 +66,7 @@ position:relative;
  
 overflow:auto;
  
-height:calc(100vh - 90px);
+height:calc(100vh - 160px);
  
 background:#d9d9d9;
  
@@ -178,19 +180,64 @@ color:white;
 }
  
 #saveStatus{
- 
-margin-left:auto;
- 
 font-weight:bold;
- 
 }
  
 #mouseCoords{
+font-weight:bold;
+}
+ 
+#sidePanel{
+ 
+position:absolute;
+ 
+top:180px;
+right:20px;
+ 
+width:260px;
+ 
+background:white;
+ 
+border:2px solid black;
+ 
+padding:10px;
+ 
+z-index:10000;
+ 
+box-shadow:0 0 10px rgba(0,0,0,.3);
+ 
+}
+ 
+#sidePanelHeader{
  
 font-weight:bold;
  
-padding-left:10px;
+margin-bottom:10px;
  
+cursor:move;
+ 
+background:#222;
+ 
+color:white;
+ 
+padding:8px;
+ 
+margin:-10px -10px 10px -10px;
+ 
+}
+ 
+.hidden{
+display:none;
+}
+ 
+label{
+font-size:13px;
+}
+ 
+.templateBox{
+display:flex;
+align-items:center;
+gap:5px;
 }
  
 </style>
@@ -227,12 +274,67 @@ Mark Cleaned Today
  
 <input
 id="unitInput"
-placeholder="Add Unit"
+placeholder="Unit"
 />
  
 <button onclick="addUnit()">
 Add Unit
 </button>
+ 
+<label>
+<input
+type="radio"
+name="unitSize"
+value="5x5"
+checked
+>
+5x5
+</label>
+ 
+<label>
+<input
+type="radio"
+name="unitSize"
+value="5x10"
+>
+5x10
+</label>
+ 
+<label>
+<input
+type="radio"
+name="unitSize"
+value="10x10"
+>
+10x10
+</label>
+ 
+<label>
+<input
+type="radio"
+name="unitSize"
+value="10x15"
+>
+10x15
+</label>
+ 
+<label>
+<input
+type="radio"
+name="unitSize"
+value="10x25"
+>
+10x25
+</label>
+ 
+<label>
+Admin
+<input
+type="checkbox"
+id="adminToggle"
+checked
+>
+</label>
  
 <div id="mouseCoords">
 X:0 Y:0
@@ -241,6 +343,70 @@ X:0 Y:0
 <div id="saveStatus">
 Unsaved
 </div>
+ 
+<div class="templateBox">
+ 
+<b>5x5</b>
+ 
+W
+<input type="number" id="size_5x5_w" value="30">
+ 
+H
+<input type="number" id="size_5x5_h" value="30">
+ 
+</div>
+ 
+<div class="templateBox">
+ 
+<b>5x10</b>
+ 
+W
+<input type="number" id="size_5x10_w" value="30">
+ 
+H
+<input type="number" id="size_5x10_h" value="55">
+ 
+</div>
+ 
+<div class="templateBox">
+ 
+<b>10x10</b>
+ 
+W
+<input type="number" id="size_10x10_w" value="55">
+ 
+H
+<input type="number" id="size_10x10_h" value="55">
+ 
+</div>
+ 
+<div class="templateBox">
+ 
+<b>10x15</b>
+ 
+W
+<input type="number" id="size_10x15_w" value="55">
+ 
+H
+<input type="number" id="size_10x15_h" value="80">
+ 
+</div>
+ 
+<div class="templateBox">
+ 
+<b>10x25</b>
+ 
+W
+<input type="number" id="size_10x25_w" value="55">
+ 
+H
+<input type="number" id="size_10x25_h" value="130">
+ 
+</div>
+ 
+<button onclick="updateTemplateSizes()">
+Update Templates
+</button>
  
 </div>
  
@@ -253,7 +419,29 @@ src="facilitymap.png"
  
 </div>
  
+<div id="sidePanel" class="hidden">
+ 
+<div id="sidePanelHeader">
+Unit Details
+</div>
+ 
+<div id="panelContent"></div>
+ 
+</div>
+ 
 <script>
+ 
+const GRID_SIZE = 5;
+ 
+let unitSizes = {
+ 
+"5x5":{w:30,h:30},
+"5x10":{w:30,h:55},
+"10x10":{w:55,h:55},
+"10x15":{w:55,h:80},
+"10x25":{w:55,h:130}
+ 
+};
  
 let coords = {};
  
@@ -265,28 +453,78 @@ let selectionBox = null;
  
 let selectionStart = null;
  
-async function loadCoords(){
+function updateTemplateSizes(){
  
-try{
+unitSizes["5x5"] = {
  
-const res =
-await fetch(
-"coordinates.json"
+w:parseInt(document.getElementById("size_5x5_w").value),
+h:parseInt(document.getElementById("size_5x5_h").value)
+ 
+};
+ 
+unitSizes["5x10"] = {
+ 
+w:parseInt(document.getElementById("size_5x10_w").value),
+h:parseInt(document.getElementById("size_5x10_h").value)
+ 
+};
+ 
+unitSizes["10x10"] = {
+ 
+w:parseInt(document.getElementById("size_10x10_w").value),
+h:parseInt(document.getElementById("size_10x10_h").value)
+ 
+};
+ 
+unitSizes["10x15"] = {
+ 
+w:parseInt(document.getElementById("size_10x15_w").value),
+h:parseInt(document.getElementById("size_10x15_h").value)
+ 
+};
+ 
+unitSizes["10x25"] = {
+ 
+w:parseInt(document.getElementById("size_10x25_w").value),
+h:parseInt(document.getElementById("size_10x25_h").value)
+ 
+};
+ 
+localStorage.setItem(
+"unitTemplateSizes",
+JSON.stringify(unitSizes)
 );
  
-coords =
-await res.json();
- 
-updateAllColors();
- 
-Object.keys(coords)
-.forEach(createUnit);
- 
-}catch(e){
- 
-console.log(e);
+alert("Template sizes updated");
  
 }
+ 
+function loadTemplateSizes(){
+ 
+const saved =
+localStorage.getItem(
+"unitTemplateSizes"
+);
+ 
+if(!saved) return;
+ 
+unitSizes =
+JSON.parse(saved);
+ 
+Object.keys(unitSizes)
+.forEach(size=>{
+ 
+document.getElementById(
+"size_"+size+"_w"
+).value =
+unitSizes[size].w;
+ 
+document.getElementById(
+"size_"+size+"_h"
+).value =
+unitSizes[size].h;
+ 
+});
  
 }
  
@@ -295,11 +533,8 @@ function daysSince(date){
 if(!date) return 999;
  
 return Math.floor(
- 
 (new Date() - new Date(date))
- 
-/ 86400000
- 
+/86400000
 );
  
 }
@@ -316,20 +551,40 @@ return "brown";
  
 }
  
-function updateAllColors(){
+function addUnit(){
  
-Object.keys(coords)
-.forEach(unit=>{
+const unit =
+document.getElementById(
+"unitInput"
+).value.trim();
  
-const days =
-daysSince(
-coords[unit].lastCleaned
-);
+if(!unit) return;
  
-coords[unit].color =
-getStatusColor(days);
+const selectedSize =
+document.querySelector(
+'input[name="unitSize"]:checked'
+).value;
  
-});
+const size =
+unitSizes[selectedSize];
+ 
+coords[unit] = {
+ 
+x:100,
+y:100,
+ 
+w:size.w,
+h:size.h,
+ 
+type:selectedSize,
+ 
+lastCleaned:null,
+ 
+color:"brown"
+ 
+};
+ 
+createUnit(unit);
  
 }
  
@@ -340,45 +595,30 @@ document.getElementById(
 "mapContainer"
 );
  
-if(!coords[unit]){
- 
-coords[unit] = {
- 
-x:100,
-y:100,
-w:42,
-h:26,
-lastCleaned:null,
-color:"brown"
- 
-};
- 
-}
+const data =
+coords[unit];
  
 const div =
 document.createElement("div");
  
 div.className =
-"unit "+
-coords[unit].color;
+"unit "+data.color;
  
 div.innerHTML = unit;
  
 div.dataset.unit = unit;
  
 div.style.left =
-coords[unit].x + "px";
+data.x+"px";
  
 div.style.top =
-coords[unit].y + "px";
+data.y+"px";
  
 div.style.width =
-coords[unit].w + "px";
+data.w+"px";
  
 div.style.height =
-coords[unit].h + "px";
- 
-enableDrag(div);
+data.h+"px";
  
 div.addEventListener(
 "click",
@@ -388,17 +628,35 @@ e.stopPropagation();
  
 toggleSelect(div);
  
-alert(
+const admin =
+document.getElementById(
+"adminToggle"
+).checked;
  
-"Unit: "+unit+
+if(admin) return;
  
-"\nLast Cleaned: "+(
-coords[unit].lastCleaned || "Never"
-)+
+showPanel(unit);
  
-"\nStatus: "+coords[unit].color
- 
+}
 );
+ 
+div.addEventListener(
+"mousedown",
+e=>{
+ 
+if(
+e.target.classList.contains(
+"resizeHandle"
+)
+) return;
+ 
+active = {
+ 
+el:div,
+offsetX:e.offsetX,
+offsetY:e.offsetY
+ 
+};
  
 }
 );
@@ -429,58 +687,38 @@ map.appendChild(div);
  
 }
  
-function addUnit(){
+function showPanel(unit){
  
-const input =
+const panel =
 document.getElementById(
-"unitInput"
+"sidePanel"
 );
  
-const unit =
-input.value.trim();
+const content =
+document.getElementById(
+"panelContent"
+);
  
-if(!unit) return;
+const data =
+coords[unit];
  
-coords[unit] = {
+content.innerHTML = `
  
-x:100,
-y:100,
-w:42,
-h:26,
-lastCleaned:null,
-color:"brown"
+<b>Unit:</b> ${unit}<br><br>
  
-};
+<b>Last Cleaned:</b>
+${data.lastCleaned || "Never"}<br><br>
  
-createUnit(unit);
+<b>Status:</b>
+${data.color}<br><br>
  
-input.value="";
+<b>Type:</b>
+${data.type}
  
-markUnsaved();
+`;
  
-}
- 
-function enableDrag(el){
- 
-el.addEventListener(
-"mousedown",
-e=>{
- 
-if(
-e.target.classList.contains(
-"resizeHandle"
-)
-) return;
- 
-active = {
- 
-el,
-offsetX:e.offsetX,
-offsetY:e.offsetY
- 
-};
- 
-}
+panel.classList.remove(
+"hidden"
 );
  
 }
@@ -532,42 +770,48 @@ e.clientY -
 active.el.offsetTop;
  
 active.el.style.width =
-width + "px";
+width+"px";
  
 active.el.style.height =
-height + "px";
+height+"px";
  
 coords[unit].w = width;
- 
 coords[unit].h = height;
  
 }else{
  
-const x =
+let x =
 e.clientX -
 rect.left +
 map.scrollLeft -
 active.offsetX;
  
-const y =
+let y =
 e.clientY -
 rect.top +
 map.scrollTop -
 active.offsetY;
  
-active.el.style.left =
-x + "px";
+x =
+Math.round(
+x / GRID_SIZE
+)*GRID_SIZE;
  
-active.el.style.top =
-y + "px";
+y =
+Math.round(
+y / GRID_SIZE
+)*GRID_SIZE;
  
 coords[unit].x = x;
- 
 coords[unit].y = y;
  
-}
+active.el.style.left =
+x+"px";
  
-markUnsaved();
+active.el.style.top =
+y+"px";
+ 
+}
  
 }
  
@@ -608,16 +852,16 @@ selectionStart.y
 );
  
 selectionBox.style.left =
-x + "px";
+x+"px";
  
 selectionBox.style.top =
-y + "px";
+y+"px";
  
 selectionBox.style.width =
-w + "px";
+w+"px";
  
 selectionBox.style.height =
-h + "px";
+h+"px";
  
 }
  
@@ -643,12 +887,10 @@ const rect =
 unit.getBoundingClientRect();
  
 if(
- 
 rect.left < box.right &&
 rect.right > box.left &&
 rect.top < box.bottom &&
 rect.bottom > box.top
- 
 ){
  
 selectUnit(unit);
@@ -678,14 +920,6 @@ if(
 e.target.id !== "facility"
 )
 return;
- 
-if(selectionBox){
- 
-selectionBox.remove();
- 
-selectionBox = null;
- 
-}
  
 clearSelection();
  
@@ -720,12 +954,6 @@ selectionStart.x+"px";
  
 selectionBox.style.top =
 selectionStart.y+"px";
- 
-selectionBox.style.width =
-"0px";
- 
-selectionBox.style.height =
-"0px";
  
 map.appendChild(
 selectionBox
@@ -794,8 +1022,6 @@ div.remove();
  
 selected=[];
  
-markUnsaved();
- 
 }
  
 function markCleanedToday(){
@@ -827,8 +1053,6 @@ div.classList.add(
 );
  
 });
- 
-markUnsaved();
  
 }
  
@@ -864,6 +1088,14 @@ parseInt(
 prompt("Spacing")
 ) || 50;
  
+const selectedSize =
+document.querySelector(
+'input[name="unitSize"]:checked'
+).value;
+ 
+const size =
+unitSizes[selectedSize];
+ 
 for(
 let i=start;
 i<=end;
@@ -874,9 +1106,14 @@ coords[i] = {
  
 x:x,
 y:y,
-w:42,
-h:26,
+ 
+w:size.w,
+h:size.h,
+ 
+type:selectedSize,
+ 
 lastCleaned:null,
+ 
 color:"brown"
  
 };
@@ -900,17 +1137,6 @@ x += spacing;
  
 }
  
-markUnsaved();
- 
-}
- 
-function markUnsaved(){
- 
-document.getElementById(
-"saveStatus"
-).innerHTML =
-"Unsaved Changes";
- 
 }
  
 function saveLocal(){
@@ -919,11 +1145,6 @@ localStorage.setItem(
 "coords",
 JSON.stringify(coords)
 );
- 
-document.getElementById(
-"saveStatus"
-).innerHTML =
-"Saved Local";
  
 }
  
@@ -963,14 +1184,11 @@ URL.revokeObjectURL(
 url
 );
  
-document.getElementById(
-"saveStatus"
-).innerHTML =
-"Exported JSON";
- 
 }
  
 window.onload=()=>{
+ 
+loadTemplateSizes();
  
 const local =
 localStorage.getItem(
@@ -982,14 +1200,22 @@ if(local){
 coords =
 JSON.parse(local);
  
-updateAllColors();
- 
 Object.keys(coords)
-.forEach(createUnit);
+.forEach(unit=>{
  
-}else{
+const days =
+daysSince(
+coords[unit]
+.lastCleaned
+);
  
-loadCoords();
+coords[unit]
+.color =
+getStatusColor(days);
+ 
+createUnit(unit);
+ 
+});
  
 }
  
