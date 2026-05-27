@@ -18,9 +18,7 @@ background:#f0f0f0;
 
 #toolbar{
 
-height:auto;
-
-min-height:220px;
+height:140px;
 
 background:#1f1f1f;
 
@@ -28,7 +26,7 @@ color:white;
 
 display:flex;
 
-align-items:flex-start;
+align-items:center;
 
 gap:10px;
 
@@ -37,6 +35,26 @@ padding:10px;
 flex-wrap:wrap;
 
 overflow-y:auto;
+
+}
+
+#templateControls{
+
+background:#2b2b2b;
+
+color:white;
+
+padding:10px;
+
+display:flex;
+
+flex-wrap:wrap;
+
+gap:12px;
+
+align-items:center;
+
+border-top:1px solid #555;
 
 }
 
@@ -68,7 +86,7 @@ position:relative;
 
 overflow:auto;
 
-height:70vh;
+height:calc(100vh - 220px);
 
 background:#d9d9d9;
 
@@ -124,12 +142,6 @@ z-index:999;
 
 }
 
-.unit:active{
-
-cursor:grabbing;
-
-}
-
 .resizeHandle{
 
 position:absolute;
@@ -181,20 +193,14 @@ background:#8b5a2b;
 color:white;
 }
 
-#saveStatus{
-font-weight:bold;
-}
-
 #mouseCoords{
 font-weight:bold;
+color:white;
 }
 
-.hidden{
-display:none;
-}
-
-label{
-font-size:13px;
+#saveStatus{
+font-weight:bold;
+color:white;
 }
 
 .templateBox{
@@ -296,7 +302,17 @@ X:0 Y:0
 
 
 
+Unsaved
+
+
+
+
+
+
+
 Template Sizes
+
+
 
 
 5x5
@@ -308,6 +324,8 @@ W
 
 H
 <input type="number" id="size_5x5_h" value="30">
+
+
 
 
 
@@ -325,6 +343,8 @@ H
 
 
 
+
+
 10x10
 
 
@@ -338,6 +358,8 @@ H
 
 
 
+
+
 10x15
 
 
@@ -347,6 +369,8 @@ W
 
 H
 <input type="number" id="size_10x15_h" value="80">
+
+
 
 
 
@@ -367,12 +391,6 @@ H
 <button onclick="updateTemplateSizes()">
 Update Templates
 </button>
-
-
-
-
-Unsaved
-
 
 
 
@@ -411,40 +429,26 @@ let isSelecting = false;
 
 function updateTemplateSizes(){
 
-unitSizes["5x5"] = {
+Object.keys(unitSizes)
+.forEach(size=>{
 
-w:parseInt(document.getElementById("size_5x5_w").value),
-h:parseInt(document.getElementById("size_5x5_h").value)
+unitSizes[size] = {
 
-};
+w:parseInt(
+document.getElementById(
+"size_"+size+"_w"
+).value
+),
 
-unitSizes["5x10"] = {
-
-w:parseInt(document.getElementById("size_5x10_w").value),
-h:parseInt(document.getElementById("size_5x10_h").value)
-
-};
-
-unitSizes["10x10"] = {
-
-w:parseInt(document.getElementById("size_10x10_w").value),
-h:parseInt(document.getElementById("size_10x10_h").value)
+h:parseInt(
+document.getElementById(
+"size_"+size+"_h"
+).value
+)
 
 };
 
-unitSizes["10x15"] = {
-
-w:parseInt(document.getElementById("size_10x15_w").value),
-h:parseInt(document.getElementById("size_10x15_h").value)
-
-};
-
-unitSizes["10x25"] = {
-
-w:parseInt(document.getElementById("size_10x25_w").value),
-h:parseInt(document.getElementById("size_10x25_h").value)
-
-};
+});
 
 localStorage.setItem(
 "unitTemplateSizes",
@@ -510,8 +514,6 @@ w:size.w,
 h:size.h,
 
 type:selectedSize,
-
-lastCleaned:null,
 
 color:"brown"
 
@@ -745,16 +747,16 @@ selectionStart.y
 );
 
 selectionBox.style.left =
-x + "px";
+x+"px";
 
 selectionBox.style.top =
-y + "px";
+y+"px";
 
 selectionBox.style.width =
-w + "px";
+w+"px";
 
 selectionBox.style.height =
-h + "px";
+h+"px";
 
 }
 
@@ -961,72 +963,35 @@ saveLocal();
 
 function generateRow(){
 
-const startInput =
-prompt("Start Unit");
-
-const endInput =
-prompt("End Unit");
-
-if(
-startInput === null ||
-endInput === null
-) return;
-
 const start =
-Number(startInput);
+Number(prompt("Start Unit"));
 
 const end =
-Number(endInput);
+Number(prompt("End Unit"));
 
 if(
 isNaN(start) ||
 isNaN(end)
-){
-
-alert(
-"Invalid unit numbers"
-);
-
-return;
-
-}
+) return;
 
 const numbering =
 prompt(
 "ascending or descending?"
-);
-
-if(!numbering) return;
+)?.toLowerCase();
 
 const direction =
 prompt(
 "horizontal or vertical?"
-);
-
-if(!direction) return;
-
-const startXInput =
-prompt("Start X");
-
-const startYInput =
-prompt("Start Y");
-
-if(
-startXInput === null ||
-startYInput === null
-) return;
+)?.toLowerCase();
 
 let x =
-Number(startXInput);
+Number(prompt("Start X"));
 
 let y =
-Number(startYInput);
-
-const spacingInput =
-prompt("Spacing");
+Number(prompt("Start Y"));
 
 let spacing =
-Number(spacingInput);
+Number(prompt("Spacing"));
 
 if(
 isNaN(spacing) ||
@@ -1048,7 +1013,7 @@ selectedSize.value
 ];
 
 if(
-numbering.toLowerCase() ===
+numbering ===
 "descending"
 ){
 
@@ -1068,8 +1033,6 @@ h:size.h,
 
 type:selectedSize.value,
 
-lastCleaned:null,
-
 color:"brown"
 
 };
@@ -1079,7 +1042,7 @@ String(i)
 );
 
 if(
-direction.toLowerCase() ===
+direction ===
 "vertical"
 ){
 
@@ -1111,8 +1074,6 @@ h:size.h,
 
 type:selectedSize.value,
 
-lastCleaned:null,
-
 color:"brown"
 
 };
@@ -1122,7 +1083,7 @@ String(i)
 );
 
 if(
-direction.toLowerCase() ===
+direction ===
 "vertical"
 ){
 
@@ -1139,10 +1100,6 @@ x += spacing;
 }
 
 saveLocal();
-
-alert(
-"Row generated successfully"
-);
 
 }
 
